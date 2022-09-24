@@ -1,0 +1,182 @@
+swagger: "2.0"
+info:
+  description: Send messages to Teams
+  title: teams
+  version: "1.0"
+  x-direktiv-meta:
+    container: gcr.io/direktiv/functions/teams
+    maintainer: |-
+      [direktiv.io](https://www.direktiv.io) 
+    issues: https://github.com/direktiv-apps/teams/issues
+    url: https://github.com/direktiv-apps/teams  
+    categories:
+    - social
+    license: |-
+      [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+    long-description: >-
+      This function can send messages and adaptove cards to Microsoft Teams via incoming webhook URL.
+
+
+      To create an incoming webhook URL go to `Manage Channel` in Teams. In the `Connector` section select `Incoming Webhook` and create a new webhook. 
+      This URL is used as Direktiv secret to send the message to this channel.
+consumes:
+- application/json
+produces:
+- application/json
+schemes:
+- http
+paths:
+  /: 
+    delete:
+      parameters:
+        - name: Direktiv-ActionID
+          in: header
+          type: string
+          description: |
+            On cancel Direktiv sends a DELETE request to
+            the action with id in the header
+      x-direktiv:
+        cancel: echo 'cancel {{ .DirektivActionID }}'
+      responses:
+        200:
+    post:
+      parameters:
+        - name: Direktiv-ActionID
+          in: header
+          type: string
+          default: development
+          description: |
+            direktiv action id is an UUID. 
+            For development it can be set to 'development'
+        - name: Direktiv-TempDir
+          in: header
+          type: string
+          default: /tmp
+          description: |
+            direktiv temp dir is the working directory for that request
+            For development it can be set to e.g. '/tmp'
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              webhook-url:
+                type: string
+                description: URL for Teams's incoming webhook
+              content:
+                type: object
+                additionalProperties: true
+              verbose:
+                type: boolean
+                description: Enables verbose output
+      # direktiv code generation is configured here
+      x-direktiv-function: |-
+        functions:
+        - id: teams
+          image: gcr.io/direktiv/functions/teams:1.0
+          type: knative-workflow
+      x-direktiv-examples:
+        # ADD MORE EXAMPLES HERE
+        - title: Basic
+          content: |-
+            - id: teams
+              type: action
+              action:
+                function: teams
+                secrets: ["webhook-url"]
+                input: 
+                  webhook-url: jq(.secrets."webhook-url")
+                  verbose: true
+                  content:
+                    text: Hello World!
+
+        - title: Adaptive card and verbose output
+          content: |-
+            - id: teams
+              type: action
+              action:
+                function: teams
+                secrets: ["webhook-url"]
+                input: 
+                  webhook-url: jq(.secrets."webhook-url")
+                  verbose: true
+                  content:
+                    type: message
+                    attachments:
+                    - contentType: application/vnd.microsoft.card.adaptive
+                      content:
+                        "$schema": http://adaptivecards.io/schemas/adaptive-card.json
+                        type: AdaptiveCard
+                        version: '1.2'
+                        body:
+                        - type: TextBlock
+                          text: Textblock1
+                        - type: TextBlock
+                          text: 2 Stops Test
+                          weight: bolder
+                          spacing: medium
+      x-direktiv-secrets:
+        - name: webhook-url
+          description: Incoming webhook URL from Teams
+      x-direktiv:  
+        cmds:
+        - action: exec
+          exec: echo sending message to slack
+          silent: false
+          print: false
+        - action: exec
+          exec: |-
+            curl {{ if .Verbose }} -vv{{ end }} -H 'Content-type: application/json' --data '{{ .Content | toJson }}' {{ .WebhookURL }}
+          print: '{{ .Verbose }}'
+          silent: '{{- if .Verbose }}false{{- else}}true{{- end }}'
+        output: |
+          {
+            "teams": {{ index . 1 | toJson }}
+          }
+      x-direktiv-errors:
+        io.direktiv.command.error: Command execution failed
+        io.direktiv.output.error: Template error for output generation of the service
+        io.direktiv.ri.error: Can not create information object from request
+      responses:
+        200:
+          description: List of executed commands.
+          examples:
+            teams:
+            - result: 1
+              success: true
+          schema:
+            type: object
+            properties:
+              teams:
+                type: object
+                properties:
+                  result:
+                    type: integer
+                  success:
+                    type: boolean
+        default:
+          description: generic error response
+          headers:
+            Direktiv-ErrorCode:
+              type: string
+            Direktiv-ErrorMessage:
+              type: string
+          schema:
+            $ref: "#/definitions/error"
+definitions:
+  direktivFile:
+    type: object
+    x-go-type:
+      type: DirektivFile
+      import:
+        package: github.com/direktiv/apps/go/pkg/apps 
+  error:
+    type: object
+    required:
+      - errorCode
+      - errorMessage
+    properties:
+      errorCode:
+        type: string
+      errorMessage:
+        type: string

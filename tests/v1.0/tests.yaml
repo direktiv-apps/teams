@@ -1,0 +1,42 @@
+url: ""
+functions:
+- type: knative-workflow
+  id: teams
+  image: gcr.io/direktiv/functions/teams:test
+states:
+- id: state0
+  type: action
+  action:
+    function: teams
+    input:
+      content:
+        text: Hello World!
+      verbose: true
+      webhook-url: jq(.secrets."webhook-url")
+    secrets:
+    - webhook-url
+  transition: state1
+- id: state1
+  type: action
+  action:
+    function: teams
+    input:
+      content:
+        attachments:
+        - content:
+            $schema: http://adaptivecards.io/schemas/adaptive-card.json
+            body:
+            - text: Textblock1
+              type: TextBlock
+            - spacing: medium
+              text: 2 Stops Test
+              type: TextBlock
+              weight: bolder
+            type: AdaptiveCard
+            version: "1.2"
+          contentType: application/vnd.microsoft.card.adaptive
+        type: message
+      verbose: true
+      webhook-url: jq(.secrets."webhook-url")
+    secrets:
+    - webhook-url
