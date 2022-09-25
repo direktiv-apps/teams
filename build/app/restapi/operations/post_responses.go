@@ -16,7 +16,7 @@ import (
 // PostOKCode is the HTTP code returned for type PostOK
 const PostOKCode int = 200
 
-/*PostOK List of executed commands.
+/*PostOK Result of teams message command
 
 swagger:response postOK
 */

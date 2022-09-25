@@ -120,18 +120,17 @@ paths:
           description: Incoming webhook URL from Teams
       x-direktiv:  
         cmds:
-        - action: exec
-          exec: echo sending message to slack
-          silent: false
-          print: false
-        - action: exec
-          exec: |-
-            curl {{ if .Verbose }} -vv{{ end }} -H 'Content-type: application/json' --data '{{ .Content | toJson }}' {{ .WebhookURL }}
-          print: '{{ .Verbose }}'
-          silent: '{{- if .Verbose }}false{{- else}}true{{- end }}'
+        - action: http
+          url: "{{ .WebhookURL }}"
+          method: POST
+          headers: 
+            - Content-Type: application/json
+          data: 
+            kind: string
+            value: '{{ .Content | toJson }}'
         output: |
           {
-            "teams": {{ index . 1 | toJson }}
+            "teams": {{ index . 0 | toJson }}
           }
       x-direktiv-errors:
         io.direktiv.command.error: Command execution failed
@@ -139,7 +138,7 @@ paths:
         io.direktiv.ri.error: Can not create information object from request
       responses:
         200:
-          description: List of executed commands.
+          description: Result of teams message command
           examples:
             teams:
             - result: 1

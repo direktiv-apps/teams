@@ -84,7 +84,7 @@ functions:
 [PostParamsBody](#post-params-body)
 
 ### Response
-  List of executed commands.
+  Result of teams message command
 #### Reponse Types
     
   

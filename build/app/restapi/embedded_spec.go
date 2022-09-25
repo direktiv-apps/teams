@@ -86,7 +86,7 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "List of executed commands.",
+            "description": "Result of teams message command",
             "schema": {
               "type": "object",
               "properties": {
@@ -130,19 +130,21 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
-              "action": "exec",
-              "exec": "echo sending message to slack",
-              "print": false,
-              "silent": false
-            },
-            {
-              "action": "exec",
-              "exec": "curl {{ if .Verbose }} -vv{{ end }} -H 'Content-type: application/json' --data '{{ .Content | toJson }}' {{ .WebhookURL }}",
-              "print": "{{ .Verbose }}",
-              "silent": "{{- if .Verbose }}false{{- else}}true{{- end }}"
+              "action": "http",
+              "data": {
+                "kind": "string",
+                "value": "{{ .Content | toJson }}"
+              },
+              "headers": [
+                {
+                  "Content-Type": "application/json"
+                }
+              ],
+              "method": "POST",
+              "url": "{{ .WebhookURL }}"
             }
           ],
-          "output": "{\n  \"teams\": {{ index . 1 | toJson }}\n}\n"
+          "output": "{\n  \"teams\": {{ index . 0 | toJson }}\n}\n"
         },
         "x-direktiv-errors": {
           "io.direktiv.command.error": "Command execution failed",
@@ -269,7 +271,7 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "List of executed commands.",
+            "description": "Result of teams message command",
             "schema": {
               "$ref": "#/definitions/postOKBody"
             },
@@ -300,19 +302,21 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
-              "action": "exec",
-              "exec": "echo sending message to slack",
-              "print": false,
-              "silent": false
-            },
-            {
-              "action": "exec",
-              "exec": "curl {{ if .Verbose }} -vv{{ end }} -H 'Content-type: application/json' --data '{{ .Content | toJson }}' {{ .WebhookURL }}",
-              "print": "{{ .Verbose }}",
-              "silent": "{{- if .Verbose }}false{{- else}}true{{- end }}"
+              "action": "http",
+              "data": {
+                "kind": "string",
+                "value": "{{ .Content | toJson }}"
+              },
+              "headers": [
+                {
+                  "Content-Type": "application/json"
+                }
+              ],
+              "method": "POST",
+              "url": "{{ .WebhookURL }}"
             }
           ],
-          "output": "{\n  \"teams\": {{ index . 1 | toJson }}\n}\n"
+          "output": "{\n  \"teams\": {{ index . 0 | toJson }}\n}\n"
         },
         "x-direktiv-errors": {
           "io.direktiv.command.error": "Command execution failed",
